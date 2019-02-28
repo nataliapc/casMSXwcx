@@ -5,7 +5,7 @@
  $Desc:         Open MSX CAS files
 
  $Author:       NataliaPC <natalia.pujol@gmail.com>
- $Revision:     1.0
+ $Revision:     1.1
 
  $Comments:		https://github.com/nataliapc/casMSXwcx
 ===========================================================
