@@ -108,6 +108,22 @@ dword crc32b(unsigned char *data, unsigned int len) {
    return ~crc;
 }
 
+static void GetFoundString(FileList_t *pfl, char pInvalidReplacer, byte *pnameOut)
+{
+	int pos=10, lastValidPos=10;
+
+	pnameOut[0] = '\0';
+	for (pos=10; pos<16; pos++) {
+		if (isalnum(pfl->cData[pos])) {
+			pnameOut[pos-10] = pfl->cData[pos];
+			lastValidPos = pos;
+		} else {
+			pnameOut[pos-10] = pInvalidReplacer;
+		}
+	}
+	pnameOut[lastValidPos-9] = '\0';
+}
+
 static void FreeCAShandler(CAShandle_t *lpH)
 {
 	FileList_t *lpNext;
@@ -127,6 +143,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 	FILE *pFile;
 	int rc = 0, idx = 1;
 	long pos = 0, pos2;
+	byte foundName[7];
 	FileList_t *fl;
 
 	// Read CAS file
@@ -161,16 +178,17 @@ static int MakeCASlist(CAShandle_t *lpH)
 			fl->cData = lpH->cRawCAS + pos;
 			fl->crc32 = crc32b(fl->cData, fl->dwSize);
 			if (fl->dwSize==16) {
+				GetFoundString(fl, lpH->mInvalidReplacer, foundName);
 				if (!memcmp(HEAD_BIN, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%02u_HEADER_BIN", idx);
+					sprintf(fl->szFileName, "%02u_HEADER_BIN[%s]", idx, foundName);
 					strcpy(fl->szComment, CMT_HEAD_BIN);
 				}
 				if (!memcmp(HEAD_ASC, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%02u_HEADER_ASC", idx);
+					sprintf(fl->szFileName, "%02u_HEADER_ASC[%s]", idx, foundName);
 					strcpy(fl->szComment, CMT_HEAD_ASC);
 				}
 				if (!memcmp(HEAD_BAS, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%0ud_HEADER_BAS", idx);
+					sprintf(fl->szFileName, "%0ud_HEADER_BAS[%s]", idx, foundName);
 					strcpy(fl->szComment, CMT_HEAD_BAS);
 				}
 			}
