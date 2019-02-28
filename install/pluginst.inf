@@ -1,0 +1,6 @@
+[plugininstall]
+description=Plugin for read/extract/view files in CAS MSX image tape files
+type=wcx
+file=casMSX.wcx
+defaultdir=casMSX
+defaultextension=cas

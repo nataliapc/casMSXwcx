@@ -1,0 +1,7 @@
+#include "resource.h"
+
+//
+// Bitmap resources
+//
+IDC_ICON           ICON           "res/icon.ico"
+IDB_LOGO           BITMAP         "res/icon.bmp"
