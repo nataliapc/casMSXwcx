@@ -12,6 +12,7 @@
 */
 
 #include "wcxapi.h"
+#include "win2nix_binds.h"
 
 #include <assert.h>
 
@@ -19,6 +20,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #ifdef __MINGW32__
 #include <unistd.h>
@@ -47,7 +49,7 @@ const char CMT_DATA[]     = "Standard Data Block";
 
 typedef struct FileList_s {
 	char  szFileName[MAX_PATH-9];	// File name translated
-	DWORD dwSize;					// File size in bytes
+	dword dwSize;					// File size in bytes
 	byte  *cData;					// File data
 	dword  crc32;					// Data CRC32
 	char  szComment[80];			// Text Comment
@@ -68,13 +70,13 @@ typedef struct CAShandle_s {
 } CAShandle_t;
 
 
-HINSTANCE	hDllInst;
 const char szCfgKey[]		= "casMSXwcx";
 char szCfgFile[MAX_PATH];
 
 
 void GetCfgPath(void)
 {
+#ifdef WINDOWS
 	char path[MAX_PATH];
 
 	if (GetModuleFileName(GetModuleHandle( NULL ), path, sizeof(path))) {
@@ -88,6 +90,7 @@ void GetCfgPath(void)
 
 	strcpy(szCfgFile, path);
 	strcat(szCfgFile, "plugins\\wcx\\casMSX\\casMSX.ini");
+#endif
 }
 
 dword crc32b(unsigned char *data, unsigned int len) {
@@ -167,7 +170,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 			// Create new block
 			fl = (FileList_t*)malloc(sizeof(FileList_t));
 			if (fl==NULL) { rc = E_NO_MEMORY; break; }
-			ZeroMemory(fl, sizeof(FileList_t));
+			memset(fl, 0, sizeof(FileList_t));
 			// Search block end
 			pos2 = pos;
 			while (pos2 < lpH->lSize && memcmp(CAS_HEADER, &lpH->cRawCAS[pos2], CAS_HDR_LEN)) {
@@ -221,20 +224,25 @@ static int MakeCASlist(CAShandle_t *lpH)
 HANDLE CAS_OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	CAShandle_t *lpH = (CAShandle_t *)malloc(sizeof(CAShandle_t));
-	char szBuf[256];
+	char szBuf[256] __attribute__((unused));
 
 	// Check for out of memory
 	if(lpH==NULL) {
 		ArchiveData->OpenResult = E_NO_MEMORY;
 		return 0;
 	}
-	ZeroMemory(lpH, sizeof(CAShandle_t));
+	memset(lpH, 0, sizeof(CAShandle_t));
 
+#ifdef WINDOWS
 	GetCfgPath();
 	GetPrivateProfileString(szCfgKey, "EnableWarning", "1", szBuf, sizeof(szBuf), szCfgFile);
 	lpH->mbEnableWarnings = atoi(szBuf);
 	GetPrivateProfileString(szCfgKey, "InvalidCharReplacer", "_", szBuf, sizeof(szBuf), szCfgFile);
 	lpH->mInvalidReplacer = szBuf[0];
+#else
+	lpH->mbEnableWarnings = 1;
+	lpH->mInvalidReplacer = '_';
+#endif
 
 	// Copy archive name to handler
 	strcpy(lpH->szCASname, ArchiveData->ArcName);

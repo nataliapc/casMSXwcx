@@ -27,23 +27,23 @@ extern int CAS_GetPackerCaps(void);
 
 BOOL APIENTRY DllMain( HANDLE hinstDLL, DWORD fdwReason, LPVOID lpReserved )
 {
-    if( !hinstDLL )
+    if (!hinstDLL)
         return FALSE;
 
-    switch( fdwReason )
+    switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
             DebugString( "process attach" );
 			GetCfgPath();
+            break;
+        case DLL_PROCESS_DETACH:
+            DebugString( "process detach" );
             break;
         case DLL_THREAD_ATTACH:
             DebugString( "thread attach" );
             break;
         case DLL_THREAD_DETACH:
             DebugString( "thread detach" );
-            break;
-        case DLL_PROCESS_DETACH:
-            DebugString( "process detach" );
             break;
     }
 
@@ -108,7 +108,8 @@ WCX_API int	STDCALL DeleteFiles(char *PackedFile, char *DeleteList)
 /*
 	GetPackerCaps tells Totalcmd what features your packer plugin supports.
 */
-WCX_API int STDCALL GetPackerCaps(void)
+//WCX_API int STDCALL GetPackerCaps(void)
+int __stdcall GetPackerCaps(void)
 {
 	DebugString( "get packer caps." );
 	return CAS_GetPackerCaps();

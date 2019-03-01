@@ -1,3 +1,6 @@
+/* Contents of file wcxhead.h */
+/* It contains definitions of error codes, flags and callbacks */
+
 /* Error codes returned to calling application */
 #define E_END_ARCHIVE     10            /* No more files in archive */
 #define E_NO_MEMORY       11            /* Not enough memory */
@@ -33,13 +36,38 @@
 /* For PackFiles */
 #define PK_PACK_MOVE_FILES 1    /* Delete original after packing        */
 #define PK_PACK_SAVE_PATHS 2    /* Save path names of files             */
+#define PK_PACK_ENCRYPT    4    /* Ask user for password, then encrypt  */
 
 /* Returned by GetPackCaps */
-#define PK_CAPS_NEW        1    /* Can create new archives              */
-#define PK_CAPS_MODIFY     2    /* Can modify exisiting archives        */
-#define PK_CAPS_MULTIPLE   4    /* Archive can contain multiple files   */
-#define PK_CAPS_DELETE     8    /* Can delete files                     */
-#define PK_CAPS_OPTIONS   16    /* Has options dialog                   */
+#define PK_CAPS_NEW         1    /* Can create new archives              */
+#define PK_CAPS_MODIFY      2    /* Can modify exisiting archives        */
+#define PK_CAPS_MULTIPLE    4    /* Archive can contain multiple files   */
+#define PK_CAPS_DELETE      8    /* Can delete files                     */
+#define PK_CAPS_OPTIONS    16    /* Has options dialog                   */
+#define PK_CAPS_MEMPACK    32    /* Supports packing in memory           */
+#define PK_CAPS_BY_CONTENT 64    /* Detect archive type by content       */
+#define PK_CAPS_SEARCHTEXT 128   /* Allow searching for text in archives */
+                                 /* created with this plugin}            */
+#define PK_CAPS_HIDE       256   /* Show as normal files (hide packer    */
+                                 /* icon), open with Ctrl+PgDn, not Enter*/
+#define PK_CAPS_ENCRYPT    512   /* Plugin supports PK_PACK_ENCRYPT option*/
+
+/* Flags for packing in memory */
+#define MEM_OPTIONS_WANTHEADERS 1  /* Return archive headers with packed data */
+
+/* Errors returned by PackToMem */
+#define MEMPACK_OK              0  /* Function call finished OK, but there is more data */
+#define MEMPACK_DONE            1  /* Function call finished OK, there is no more data  */
+
+#define PK_CRYPT_SAVE_PASSWORD       1
+#define PK_CRYPT_LOAD_PASSWORD       2
+#define PK_CRYPT_LOAD_PASSWORD_NO_UI 3 // Load password only if master password has already been entered!
+#define PK_CRYPT_COPY_PASSWORD       4 // Copy encrypted password to new archive name
+#define PK_CRYPT_MOVE_PASSWORD       5 // Move password when renaming an archive
+#define PK_CRYPT_DELETE_PASSWORD     6 // Delete password
+
+#define PK_CRYPTOPT_MASTERPASS_SET   1 // The user already has a master password defined
+
 
 typedef struct {
     char ArcName[260];
@@ -60,6 +88,48 @@ typedef struct {
   } tHeaderData;
 
 typedef struct {
+    char ArcName[1024];
+    char FileName[1024];
+    int Flags;
+    unsigned int PackSize;
+    unsigned int PackSizeHigh;
+    unsigned int UnpSize;
+    unsigned int UnpSizeHigh;
+    int HostOS;
+    int FileCRC;
+    int FileTime;
+    int UnpVer;
+    int Method;
+    int FileAttr;
+    char* CmtBuf;
+    int CmtBufSize;
+    int CmtSize;
+    int CmtState;
+    char Reserved[1024];
+  } tHeaderDataEx;
+
+typedef struct {
+    WCHAR ArcName[1024];
+    WCHAR FileName[1024];
+    int Flags;
+    unsigned int PackSize;
+    unsigned int PackSizeHigh;
+    unsigned int UnpSize;
+    unsigned int UnpSizeHigh;
+    int HostOS;
+    int FileCRC;
+    int FileTime;
+    int UnpVer;
+    int Method;
+    int FileAttr;
+    char* CmtBuf;
+    int CmtBufSize;
+    int CmtSize;
+    int CmtState;
+    char Reserved[1024];
+  } tHeaderDataExW;
+
+typedef struct {
     char* ArcName;
     int OpenMode;
     int OpenResult;
@@ -69,10 +139,32 @@ typedef struct {
     int CmtState;
   } tOpenArchiveData;
 
+typedef struct {
+    WCHAR* ArcName;
+    int OpenMode;
+    int OpenResult;
+    WCHAR* CmtBuf;
+    int CmtBufSize;
+    int CmtSize;
+    int CmtState;
+  } tOpenArchiveDataW;
+
+typedef struct {
+    int size;
+    DWORD PluginInterfaceVersionLow;
+    DWORD PluginInterfaceVersionHi;
+    char DefaultIniName[MAX_PATH];
+} PackDefaultParamStruct;
+
+
 /* Definition of callback functions called by the DLL
 Ask to swap disk for multi-volume archive */
 typedef int (__stdcall *tChangeVolProc)(char *ArcName,int Mode);
+typedef int (__stdcall *tChangeVolProcW)(WCHAR *ArcName,int Mode);
 /* Notify that data is processed - used for progress dialog */
 typedef int (__stdcall *tProcessDataProc)(char *FileName,int Size);
-
-
+typedef int (__stdcall *tProcessDataProcW)(WCHAR *FileName,int Size);
+typedef int (__stdcall *tPkCryptProc)(int CryptoNr,int Mode,
+             char* ArchiveName,char* Password,int maxlen);
+typedef int (__stdcall *tPkCryptProcW)(int CryptoNr,int Mode,
+             WCHAR* ArchiveName,WCHAR* Password,int maxlen);

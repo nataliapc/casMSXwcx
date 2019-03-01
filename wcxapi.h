@@ -19,22 +19,16 @@
 extern "C" {
 #endif
 
-#define WIN32_LEAN_AND_MEAN
+#ifdef WINDOWS
+	#include <windows.h>
+	#define WCX_API __declspec(dllexport)
+	#define STDCALL __stdcall
+#else
+	#include "win2nix_binds.h"
+#endif
 
-#include <windows.h>
 #include "wcxhead.h"
 
-#ifdef STDCALL
-#undef STDCALL
-#endif
-
-#ifdef AMIGADX_EXPORTS
-#define WCX_API __declspec(dllexport)
-#define STDCALL __stdcall
-#else
-#define WCX_API
-#define STDCALL
-#endif
 
 // Windows Commander Interface
 // Mandatory
@@ -48,7 +42,8 @@ WCX_API void	STDCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProce
 // Optional
 WCX_API int		STDCALL PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags);
 WCX_API int		STDCALL DeleteFiles (char *PackedFile, char *DeleteList);
-WCX_API int		STDCALL GetPackerCaps(void);
+//WCX_API int		STDCALL GetPackerCaps(void);
+int __stdcall GetPackerCaps(void);
 
 #ifdef __cplusplus
 }
