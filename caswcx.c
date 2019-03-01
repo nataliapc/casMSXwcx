@@ -31,6 +31,10 @@
 #include "resource.h"
 
 
+/*===========================================================
+	Constants
+*/
+
 #define CAS_PACKED 0x0001
 #define FIXED_DATE ((1984 - 1980) << 25 | 1 << 21 | 1 << 16 | 0 << 11 | 0 << 5 | 0/2)
 
@@ -47,6 +51,13 @@ const char CMT_HEAD_BAS[] = "Standard Tokenized Basic Header";
 const char CMT_HEAD_ASC[] = "Standard ASCII Basic Header";
 const char CMT_DATA[]     = "Standard Data Block";
 
+const char szCfgKey[]     = "casMSXwcx";
+
+
+/*===========================================================
+	Structs
+*/
+
 typedef struct FileList_s {
 	char  szFileName[MAX_PATH-9];	// File name translated
 	dword dwSize;					// File size in bytes
@@ -57,8 +68,8 @@ typedef struct FileList_s {
 } FileList_t;
 
 typedef struct CAShandle_s {
-	char		szCASname[MAX_PATH * 16];	// CAS file name
-	dword		dwCASflags;						// Flags
+	WCHAR		szCASname[MAX_PATH * 16];	// CAS file name
+	dword		dwCASflags;					// Flags
 	byte        *cRawCAS;
 	long        lSize;
 	FileList_t	*lpFileListHead;
@@ -70,10 +81,16 @@ typedef struct CAShandle_s {
 } CAShandle_t;
 
 
-const char szCfgKey[]		= "casMSXwcx";
+/*===========================================================
+	Global variables
+*/
+
 char szCfgFile[MAX_PATH];
 
 
+/*===========================================================
+	Internal functions
+*/
 void GetCfgPath(void)
 {
 #ifdef WINDOWS
@@ -134,7 +151,6 @@ static void FreeCAShandler(CAShandle_t *lpH)
 	free(lpH->cRawCAS);
 	while (lpH->lpFileListHead) {
 		lpNext = lpH->lpFileListHead->lpNext;
-		free(lpH->lpFileListHead->cData);
 		free(lpH->lpFileListHead);
 		lpH->lpFileListHead = lpNext;
 	}
@@ -150,7 +166,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 	FileList_t *fl;
 
 	// Read CAS file
-	pFile = fopen (lpH->szCASname ,"rb");
+	pFile = _wfopen (lpH->szCASname, L"rb");
 	if (pFile==NULL) return E_EOPEN;
 	// Get file size
 	fseek (pFile , 0 , SEEK_END);
@@ -219,9 +235,9 @@ static int MakeCASlist(CAShandle_t *lpH)
 	Function name	: STDCALL OpenArchive
 	Description	    : Main entry point to Windows Commander
 	Return type		: WCX_API HANDLE
-	Argument        : tOpenArchiveData *ArchiveData
+	Argument        : tOpenArchiveDataW *ArchiveData
 */
-HANDLE CAS_OpenArchive(tOpenArchiveData *ArchiveData)
+HANDLE CAS_OpenArchive(tOpenArchiveDataW *ArchiveData)
 {
 	CAShandle_t *lpH = (CAShandle_t *)malloc(sizeof(CAShandle_t));
 	char szBuf[256] __attribute__((unused));
@@ -245,7 +261,7 @@ HANDLE CAS_OpenArchive(tOpenArchiveData *ArchiveData)
 #endif
 
 	// Copy archive name to handler
-	strcpy(lpH->szCASname, ArchiveData->ArcName);
+	wcslcpy(lpH->szCASname, ArchiveData->ArcName, MAX_PATH * 16);
 
 	// Default responding
 	ArchiveData->OpenResult = E_BAD_ARCHIVE;
@@ -274,17 +290,19 @@ HANDLE CAS_OpenArchive(tOpenArchiveData *ArchiveData)
 	Description	    : Totalcmd find out what files are in the archive.
 	Return type		: int (error code or 0)
 	Argument        : WCX_API HANDLE hArcData
-	Argument        : tHeaderData *HeaderData
+	Argument        : tHeaderDataExW *HeaderData
 */
-int CAS_ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
+int CAS_ReadHeader(HANDLE hArcData, tHeaderDataExW *HeaderData)
 {
 	CAShandle_t *lpH = (CAShandle_t *)hArcData;
 	FileList_t *fl;
+	char buff[1024];
 
 	if (lpH->lpFileListCur) {
 		fl = lpH->lpFileListCur;
 
-		sprintf(HeaderData->FileName, "%s.%08lx", fl->szFileName, fl->crc32);
+		sprintf(buff, "%s.%08lx", fl->szFileName, fl->crc32);
+		awfilenamecopy(HeaderData->FileName, buff);
 
 		HeaderData->FileTime = FIXED_DATE;
 		HeaderData->FileAttr = 0x20;
@@ -317,7 +335,7 @@ int CAS_ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 	Argument        : char *DestPath
 	Argument        : char *DestName
 */
-int CAS_ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
+int CAS_ProcessFile(HANDLE hArcData, int Operation, WCHAR *DestPath, WCHAR *DestName)
 {
 	FileList_t *fl = ((CAShandle_t *)hArcData)->lpFileListThis;
 	FILE *pFile;
@@ -329,7 +347,7 @@ int CAS_ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestNa
 		case PK_EXTRACT:
 			if (DestName != NULL) {
 				// Write Raw Block file
-				if ((pFile=fopen (DestName ,"wb"))==NULL) return E_EOPEN;
+				if ((pFile=_wfopen (DestName, L"wb"))==NULL) return E_EOPEN;
 				if (fwrite(fl->cData, 1, fl->dwSize, pFile) != fl->dwSize) return E_EWRITE;
 				if (fclose(pFile)) return E_ECLOSE;
 			} else {
@@ -370,13 +388,13 @@ int CAS_CloseArchive(HANDLE hArcData)
 	Description	    : Specifies what should happen when a user creates,
 	                  or adds files to the archive.
 	Return type		: int (error code or 0)
-	Argument        : char *PackedFile
-	Argument        : char *SubPath
-	Argument        : char *SrcPath
-	Argument        : char *AddList
+	Argument        : WCHAR *PackedFile
+	Argument        : WCHAR *SubPath
+	Argument        : WCHAR *SrcPath
+	Argument        : WCHAR *AddList
 	Argument        : int Flags
 */
-int CAS_PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
+int CAS_PackFiles (WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, WCHAR *AddList, int Flags)
 {
 	return E_NOT_SUPPORTED;
 }
@@ -386,12 +404,12 @@ int CAS_PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList
 	Function name	: DeleteFiles
 	Description	    : Delete file(s) from CAS file
 	Return type		: STDCALL
-	Argument        : char *PackedFile
-	Argument        : char *DeleteList
+	Argument        : WCHAR *PackedFile
+	Argument        : WCHAR *DeleteList
 */
-int CAS_DeleteFiles (char *PackedFile, char *DeleteList)
+int CAS_DeleteFiles (WCHAR *PackedFile, WCHAR *DeleteList)
 {
-	return 0;
+	return E_NOT_SUPPORTED;
 }
 
 int CAS_GetPackerCaps(void)

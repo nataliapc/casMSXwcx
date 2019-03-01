@@ -15,12 +15,12 @@ tProcessDataProc ProcessDataProc;
 extern HINSTANCE	hDllInst;
 
 extern void GetCfgPath(void);
-extern HANDLE CAS_OpenArchive(tOpenArchiveData *ArchiveData);
-extern int CAS_ReadHeader(HANDLE hArcData, tHeaderData *HeaderData);
-extern int CAS_ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName);
+extern HANDLE CAS_OpenArchive(tOpenArchiveDataW *ArchiveData);
+extern int CAS_ReadHeader(HANDLE hArcData, tHeaderDataExW *HeaderData);
+extern int CAS_ProcessFile(HANDLE hArcData, int Operation, WCHAR *DestPath, WCHAR *DestName);
 extern int CAS_CloseArchive(HANDLE hArcData);
-extern int CAS_PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags);
-extern int CAS_DeleteFiles (char *PackedFile, char *DeleteList);
+extern int CAS_PackFiles (WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, WCHAR *AddList, int Flags);
+extern int CAS_DeleteFiles (WCHAR *PackedFile, WCHAR *DeleteList);
 extern int CAS_GetPackerCaps(void);
 
 //------------[ DLL API ]--------------------------
@@ -56,13 +56,15 @@ BOOL APIENTRY DllMain( HANDLE hinstDLL, DWORD fdwReason, LPVOID lpReserved )
 WCX_API HANDLE STDCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	DebugString( "open archive" );
-	return CAS_OpenArchive( ArchiveData );
+	ArchiveData->OpenResult = E_NOT_SUPPORTED;
+	return 0;
 }
-/*
+
 WCX_API HANDLE STDCALL OpenArchiveW(tOpenArchiveDataW *ArchiveData)
 {
-	return 0;
-}*/
+	DebugString( "open archiveW" );
+	return CAS_OpenArchive(ArchiveData);
+}
 
 /*
 	Totalcmd calls ReadHeader to find out what files are in the archive.
@@ -70,18 +72,14 @@ WCX_API HANDLE STDCALL OpenArchiveW(tOpenArchiveDataW *ArchiveData)
 WCX_API int	STDCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
 	DebugString( "read header" );
-	return CAS_ReadHeader( hArcData, HeaderData );
-}
-/*
-WCX_API int STDCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx* HeaderData)
-{
 	return E_NOT_SUPPORTED;
 }
 
 WCX_API int STDCALL ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderData)
 {
-	return E_NOT_SUPPORTED;
-}*/
+	DebugString( "read headerExW" );
+	return CAS_ReadHeader(hArcData, HeaderData);
+}
 
 /*
 	ProcessFile should unpack the specified file or test the integrity of the archive.
@@ -89,13 +87,14 @@ WCX_API int STDCALL ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderData)
 WCX_API int	STDCALL ProcessFile(HANDLE hArcData, int eOperation, char *szDestPath, char *szDestName)
 {
 	DebugString( "process file" );
-	return CAS_ProcessFile( hArcData, eOperation, szDestPath, szDestName );
+	return E_NOT_SUPPORTED;
 }
-/*
+
 WCX_API int STDCALL ProcessFileW(HANDLE hArcData, int eOperation, WCHAR* szDestPath, WCHAR* szDestName)
 {
-	return E_NOT_SUPPORTED;
-}*/
+	DebugString( "process fileW" );
+	return CAS_ProcessFile(hArcData, eOperation, szDestPath, szDestName);
+}
 
 /*
 	CloseArchive should perform all necessary operations when an archive is about to be closed.
@@ -103,7 +102,7 @@ WCX_API int STDCALL ProcessFileW(HANDLE hArcData, int eOperation, WCHAR* szDestP
 WCX_API int	STDCALL CloseArchive(HANDLE hArcData)
 {
 	DebugString( "close archive" );
-	return CAS_CloseArchive( hArcData );
+	return CAS_CloseArchive(hArcData);
 }
 
 /*
@@ -113,7 +112,14 @@ WCX_API int	STDCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath,
 							  char *AddList, int Flags)
 {
 	DebugString( "pack files" );
-	return CAS_PackFiles( PackedFile, SubPath, SrcPath, AddList, Flags );
+	return E_NOT_SUPPORTED;
+}
+
+WCX_API int	STDCALL PackFilesW(WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, 
+							  WCHAR *AddList, int Flags)
+{
+	DebugString( "pack filesW" );
+	return CAS_PackFiles(PackedFile, SubPath, SrcPath, AddList, Flags);
 }
 
 /*
@@ -122,7 +128,13 @@ WCX_API int	STDCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath,
 WCX_API int	STDCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
 	DebugString( "delete files" );
-	return CAS_DeleteFiles( PackedFile, DeleteList );
+	return E_NOT_SUPPORTED;
+}
+
+WCX_API int	STDCALL DeleteFilesW(WCHAR *PackedFile, WCHAR *DeleteList)
+{
+	DebugString( "delete files" );
+	return CAS_DeleteFiles(PackedFile, DeleteList);
 }
 
 /*

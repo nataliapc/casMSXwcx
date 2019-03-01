@@ -6,6 +6,7 @@
 #endif
 
 #ifdef DEBUG
+#include <stdio.h>
 #define DebugString(x) OutputDebugString( __STR__(__LINE__)": " ),OutputDebugString( x ),OutputDebugString( "\n" )
 #define __STR2__(x) #x
 #define __STR__(x) __STR2__(x)
