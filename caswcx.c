@@ -322,18 +322,22 @@ int CAS_ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestNa
 	FileList_t *fl = ((CAShandle_t *)hArcData)->lpFileListThis;
 	FILE *pFile;
 
-	if (Operation==PK_SKIP || Operation==PK_TEST) return 0;
-
-	if (DestName != NULL) {
-		// Write Raw Block file
-		if ((pFile=fopen (DestName ,"wb"))==NULL) return E_EOPEN;
-		if (fwrite(fl->cData, 1, fl->dwSize, pFile) != fl->dwSize) return E_EWRITE;
-		if (fclose(pFile)) return E_ECLOSE;
-	} else {
-		return E_EOPEN;
+	switch (Operation) {
+		case PK_SKIP:
+		case PK_TEST:
+			return 0;
+		case PK_EXTRACT:
+			if (DestName != NULL) {
+				// Write Raw Block file
+				if ((pFile=fopen (DestName ,"wb"))==NULL) return E_EOPEN;
+				if (fwrite(fl->cData, 1, fl->dwSize, pFile) != fl->dwSize) return E_EWRITE;
+				if (fclose(pFile)) return E_ECLOSE;
+			} else {
+				return E_EOPEN;
+			}
+			return 0;
 	}
-
-	return 0;
+	return E_NOT_SUPPORTED;
 }
 
 /*
@@ -374,7 +378,7 @@ int CAS_CloseArchive(HANDLE hArcData)
 */
 int CAS_PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
 {
-	return 0;
+	return E_NOT_SUPPORTED;
 }
 
 /*

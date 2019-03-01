@@ -32,18 +32,24 @@ extern "C" {
 
 // Windows Commander Interface
 // Mandatory
-WCX_API HANDLE	STDCALL OpenArchive(tOpenArchiveData *ArchiveData);
-WCX_API int		STDCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData);
-WCX_API int		STDCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName);
-WCX_API int		STDCALL CloseArchive(HANDLE hArcData);
+WCX_API HANDLE	STDCALL OpenArchive( tOpenArchiveData *ArchiveData);
+//WCX_API HANDLE	STDCALL OpenArchiveW (tOpenArchiveDataW *ArchiveData);
+WCX_API int		STDCALL ReadHeader (HANDLE hArcData, tHeaderData *HeaderData);
+//WCX_API int		STDCALL ReadHeaderEx (HANDLE hArcData, tHeaderDataEx* HeaderData);
+//WCX_API int		STDCALL ReadHeaderExW (HANDLE hArcData, tHeaderDataExW* HeaderData);
+WCX_API int		STDCALL ProcessFile (HANDLE hArcData, int eOperation, char *szDestPath, char *szDestName);
+//WCX_API int		STDCALL ProcessFileW (HANDLE hArcData, int eOperation, WCHAR* szDestPath, WCHAR* szDestName);
+WCX_API int		STDCALL CloseArchive (HANDLE hArcData);
 WCX_API void	STDCALL ConfigurePacker (HWND Parent, HINSTANCE DllInstance);
-WCX_API void	STDCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1);
-WCX_API void	STDCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc);
+WCX_API void	STDCALL SetChangeVolProc (HANDLE hArcData, tChangeVolProc pChangeVolProc1);
+WCX_API void	STDCALL SetProcessDataProc (HANDLE hArcData, tProcessDataProc pProcessDataProc);
 // Optional
 WCX_API int		STDCALL PackFiles (char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags);
 WCX_API int		STDCALL DeleteFiles (char *PackedFile, char *DeleteList);
-//WCX_API int		STDCALL GetPackerCaps(void);
-int __stdcall GetPackerCaps(void);
+WCX_API BOOL	STDCALL CanYouHandleThisFile (char* szFileName);
+//WCX_API BOOL	STDCALL CanYouHandleThisFileW (WCHAR* szFileName);
+//WCX_API int		STDCALL GetPackerCaps (void);
+int __stdcall GetPackerCaps (void);
 
 #ifdef __cplusplus
 }

@@ -58,6 +58,11 @@ WCX_API HANDLE STDCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	DebugString( "open archive" );
 	return CAS_OpenArchive( ArchiveData );
 }
+/*
+WCX_API HANDLE STDCALL OpenArchiveW(tOpenArchiveDataW *ArchiveData)
+{
+	return 0;
+}*/
 
 /*
 	Totalcmd calls ReadHeader to find out what files are in the archive.
@@ -67,15 +72,30 @@ WCX_API int	STDCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 	DebugString( "read header" );
 	return CAS_ReadHeader( hArcData, HeaderData );
 }
+/*
+WCX_API int STDCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx* HeaderData)
+{
+	return E_NOT_SUPPORTED;
+}
+
+WCX_API int STDCALL ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderData)
+{
+	return E_NOT_SUPPORTED;
+}*/
 
 /*
 	ProcessFile should unpack the specified file or test the integrity of the archive.
 */
-WCX_API int	STDCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
+WCX_API int	STDCALL ProcessFile(HANDLE hArcData, int eOperation, char *szDestPath, char *szDestName)
 {
 	DebugString( "process file" );
-	return CAS_ProcessFile( hArcData, Operation, DestPath, DestName );
+	return CAS_ProcessFile( hArcData, eOperation, szDestPath, szDestName );
 }
+/*
+WCX_API int STDCALL ProcessFileW(HANDLE hArcData, int eOperation, WCHAR* szDestPath, WCHAR* szDestName)
+{
+	return E_NOT_SUPPORTED;
+}*/
 
 /*
 	CloseArchive should perform all necessary operations when an archive is about to be closed.

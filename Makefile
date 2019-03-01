@@ -6,8 +6,6 @@ IDIR = .
 
 CC32 = i686-w64-mingw32-gcc
 CC64 = x86_64-w64-mingw32-gcc
-#CC32 = gcc
-#CC64 = gcc
 WRES32 = i686-w64-mingw32-windres
 WRES64 = x86_64-w64-mingw32-windres
 
@@ -20,7 +18,6 @@ ODIR32 = $(ODIR)/w32
 ODIR64 = $(ODIR)/w64
 DIR_GUARD = @mkdir -p $(@D)
 
-LINFLAGS = -fPIC
 WINFLAGS = -s -DWINDOWS
 CFLAGS = -shared -I./includes -I$(IDIR) -Wall -O3 $(WINFLAGS)
 CFLAGS32 = $(CFLAGS) -m32 -Wl,--out-implib="$(ODIR32)/libcasMSX.wcx"
