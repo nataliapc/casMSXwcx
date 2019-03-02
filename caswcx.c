@@ -46,6 +46,11 @@ const char HEAD_BIN[]   = "\xD0\xD0\xD0\xD0\xD0\xD0\xD0\xD0\xD0\xD0";
 const char HEAD_BAS[]   = "\xD3\xD3\xD3\xD3\xD3\xD3\xD3\xD3\xD3\xD3";
 const char HEAD_ASC[]   = "\xEA\xEA\xEA\xEA\xEA\xEA\xEA\xEA\xEA\xEA";
 
+const char NAME_HBIN[]  = "HEADER_BIN";
+const char NAME_HASC[]  = "HEADER_ASC";
+const char NAME_HBAS[]  = "HEADER_BAS";
+const char NAME_DATA[]  = "DATA";
+
 const char CMT_HEAD_BIN[] = "Standard Binary Header";
 const char CMT_HEAD_BAS[] = "Standard Tokenized Basic Header";
 const char CMT_HEAD_ASC[] = "Standard ASCII Basic Header";
@@ -59,11 +64,11 @@ const char szCfgKey[]     = "casMSXwcx";
 */
 
 typedef struct FileList_s {
-	char  szFileName[MAX_PATH-9];	// File name translated
-	dword dwSize;					// File size in bytes
-	byte  *cData;					// File data
+	char   szFileName[MAX_PATH-9];	// File name translated
+	dword  dwSize;					// File size in bytes
+	byte   *cData;					// File data
 	dword  crc32;					// Data CRC32
-	char  szComment[80];			// Text Comment
+	char   *szComment;				// Text Comment
 	struct FileList_s *lpNext;		// Next entry
 } FileList_t;
 
@@ -75,9 +80,6 @@ typedef struct CAShandle_s {
 	FileList_t	*lpFileListHead;
 	FileList_t	*lpFileListCur;
 	FileList_t	*lpFileListThis;
-	BOOL		mbInvalidEntryFound;
-	char		mInvalidReplacer;
-	BOOL		mbEnableWarnings;
 } CAShandle_t;
 
 
@@ -85,7 +87,9 @@ typedef struct CAShandle_s {
 	Global variables
 */
 
-char szCfgFile[MAX_PATH];
+char	szCfgFile[MAX_PATH];	//Path to .INI config file
+char	mInvalidReplacer;		//Char replacement if invalid one in "Found:" name
+BOOL	mbEnableWarnings;		//Enable warnings
 
 
 /*===========================================================
@@ -164,6 +168,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 	long pos = 0, pos2;
 	byte foundName[7];
 	FileList_t *fl;
+	char *pName, *pCmt;
 
 	// Read CAS file
 	pFile = _wfopen (lpH->szCASname, L"rb");
@@ -180,6 +185,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 	if (strncmp(CAS_HEADER, (char*)lpH->cRawCAS, CAS_HDR_LEN) && lpH->lSize) rc = E_UNKNOWN_FORMAT;
 
 	if (!rc) {
+		// Search for CAS blocks
 		while (!rc && pos < lpH->lSize) {
 			pos += CAS_HDR_LEN;
 			if (pos >= lpH->lSize) { rc = E_BAD_DATA; break; }
@@ -196,25 +202,29 @@ static int MakeCASlist(CAShandle_t *lpH)
 			fl->dwSize = pos2-pos;
 			fl->cData = lpH->cRawCAS + pos;
 			fl->crc32 = crc32b(fl->cData, fl->dwSize);
+			pName = pCmt = NULL;
 			if (fl->dwSize==16) {
-				GetFoundString(fl, lpH->mInvalidReplacer, foundName);
+				GetFoundString(fl, mInvalidReplacer, foundName);
 				if (!memcmp(HEAD_BIN, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%02u_HEADER_BIN[%s]", idx, foundName);
-					strcpy(fl->szComment, CMT_HEAD_BIN);
+					pName = (char*)NAME_HBIN;
+					pCmt = (char*)CMT_HEAD_BIN;
 				}
 				if (!memcmp(HEAD_ASC, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%02u_HEADER_ASC[%s]", idx, foundName);
-					strcpy(fl->szComment, CMT_HEAD_ASC);
+					pName = (char*)NAME_HASC;
+					pCmt = (char*)CMT_HEAD_ASC;
 				}
 				if (!memcmp(HEAD_BAS, fl->cData, HDR_LEN)) {
-					sprintf(fl->szFileName, "%0ud_HEADER_BAS[%s]", idx, foundName);
-					strcpy(fl->szComment, CMT_HEAD_BAS);
+					pName = (char*)NAME_HBAS;
+					pCmt = (char*)CMT_HEAD_BAS;
 				}
+				sprintf(fl->szFileName, "%02u_%s[%s].%08lx", idx, pName, foundName, fl->crc32);
+				fl->szComment = pCmt;
 			}
-			if (!fl->szFileName[0]) {
-				sprintf(fl->szFileName, "%02u_DATA", idx);
-				strcpy(fl->szComment, CMT_DATA);
+			if (pName==NULL) {
+				sprintf(fl->szFileName, "%02u_%s.%08lx", idx, NAME_DATA, fl->crc32);
+				fl->szComment = (char*)CMT_DATA;
 			}
+
 			// Set pointers
 			if (lpH->lpFileListHead==NULL) lpH->lpFileListHead = fl;
 			if (lpH->lpFileListCur) lpH->lpFileListCur->lpNext = fl;
@@ -252,16 +262,16 @@ HANDLE CAS_OpenArchive(tOpenArchiveDataW *ArchiveData)
 #ifdef WINDOWS
 	GetCfgPath();
 	GetPrivateProfileString(szCfgKey, "EnableWarning", "1", szBuf, sizeof(szBuf), szCfgFile);
-	lpH->mbEnableWarnings = atoi(szBuf);
+	mbEnableWarnings = atoi(szBuf);
 	GetPrivateProfileString(szCfgKey, "InvalidCharReplacer", "_", szBuf, sizeof(szBuf), szCfgFile);
-	lpH->mInvalidReplacer = szBuf[0];
+	mInvalidReplacer = szBuf[0];
 #else
-	lpH->mbEnableWarnings = 1;
-	lpH->mInvalidReplacer = '_';
+	mbEnableWarnings = 1;
+	mInvalidReplacer = '_';
 #endif
 
 	// Copy archive name to handler
-	wcslcpy(lpH->szCASname, ArchiveData->ArcName, MAX_PATH * 16);
+	wcslcpy(lpH->szCASname, ArchiveData->ArcName, sizeof(lpH->szCASname));
 
 	// Default responding
 	ArchiveData->OpenResult = E_BAD_ARCHIVE;
@@ -279,7 +289,6 @@ HANDLE CAS_OpenArchive(tOpenArchiveDataW *ArchiveData)
 
 	// Reset entry list
 	lpH->lpFileListCur = lpH->lpFileListHead;
-	lpH->mbInvalidEntryFound = FALSE; // Reset invalid entry flag
 
 	return (HANDLE)lpH;
 }
@@ -296,13 +305,11 @@ int CAS_ReadHeader(HANDLE hArcData, tHeaderDataExW *HeaderData)
 {
 	CAShandle_t *lpH = (CAShandle_t *)hArcData;
 	FileList_t *fl;
-	char buff[1024];
 
 	if (lpH->lpFileListCur) {
 		fl = lpH->lpFileListCur;
 
-		sprintf(buff, "%s.%08lx", fl->szFileName, fl->crc32);
-		awfilenamecopy(HeaderData->FileName, buff);
+		awfilenamecopy(HeaderData->FileName, fl->szFileName);
 
 		HeaderData->FileTime = FIXED_DATE;
 		HeaderData->FileAttr = 0x20;
@@ -368,16 +375,16 @@ int CAS_ProcessFile(HANDLE hArcData, int Operation, WCHAR *DestPath, WCHAR *Dest
 */
 int CAS_CloseArchive(HANDLE hArcData)
 {
-	CAShandle_t *lpHandler = (CAShandle_t *)hArcData;
+	CAShandle_t *lpH = (CAShandle_t *)hArcData;
 
 	// If packed then delete temp file!
 #ifdef PACKER_SUPPORT
-	if (lpHandler->dwCASflags & CAS_PACKED)
-		unlink(lpHandler->szCASname);
+	if (lpH->dwCASflags & CAS_PACKED)
+		unlink(lpH->szCASname);
 #endif
 
 	//Free all inner Handler data
-	FreeCAShandler(lpHandler);
+	FreeCAShandler(lpH);
 
 	return 0;
 }
@@ -409,11 +416,82 @@ int CAS_PackFiles (WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, WCHAR *Add
 */
 int CAS_DeleteFiles (WCHAR *PackedFile, WCHAR *DeleteList)
 {
-	return E_NOT_SUPPORTED;
+	CAShandle_t *lpH = (CAShandle_t *)malloc(sizeof(CAShandle_t));
+	FileList_t *fl;
+	char buff[MAX_PATH];
+	unsigned int rc = 0;
+	BOOL anyFileDeleted = FALSE;
+	FILE *pFile;
+
+	memset(lpH, 0, sizeof(CAShandle_t));
+	wcslcpy(lpH->szCASname, PackedFile, sizeof(lpH->szCASname));
+
+	if ((rc = MakeCASlist(lpH))) {
+		free(lpH);
+	}
+
+	if (!rc) {
+		while (*DeleteList) {
+			wafilenamecopy(buff, DeleteList);
+			// Search file to delete
+			fl = lpH->lpFileListHead;
+			do {
+				if (!strcmp(buff, fl->szFileName)) {
+					// Reset found node
+					lpH->lSize -= fl->dwSize;
+					fl->szFileName[0] = '\0';
+					fl->cData = NULL;
+					fl->dwSize = 0;
+					anyFileDeleted = TRUE;
+				}
+				fl = fl->lpNext;
+			} while (fl!=NULL);
+
+			// Go to next file to delete
+			while(*DeleteList) DeleteList++;
+			DeleteList++;
+		}
+		if (anyFileDeleted) {
+			// Save file without deleted blocks
+			pFile = _wfopen(PackedFile, L"wb");
+			fl = lpH->lpFileListHead;
+			do {
+				if (fl->cData != NULL) {
+					fwrite(CAS_HEADER, 1, CAS_HDR_LEN, pFile);
+					fwrite(fl->cData, 1, fl->dwSize, pFile);
+				}
+				fl = fl->lpNext;
+			} while (fl!=NULL);
+			fclose(pFile);
+		}
+
+		FreeCAShandler(lpH);
+	}
+/*
+typedef struct FileList_s {
+	char   szFileName[MAX_PATH-9];	// File name translated
+	dword  dwSize;					// File size in bytes
+	byte   *cData;					// File data
+	dword  crc32;					// Data CRC32
+	char   *szComment;				// Text Comment
+	struct FileList_s *lpNext;		// Next entry
+} FileList_t;
+typedef struct CAShandle_s {
+	WCHAR		szCASname[MAX_PATH * 16];	// CAS file name
+	dword		dwCASflags;					// Flags
+	byte        *cRawCAS;
+	long        lSize;
+	FileList_t	*lpFileListHead;
+	FileList_t	*lpFileListCur;
+	FileList_t	*lpFileListThis;
+} CAShandle_t;
+*/
+	return rc;
 }
 
 int CAS_GetPackerCaps(void)
 {
 	// Return capabilities 
-	return PK_CAPS_MULTIPLE;		// Archive can contain multiple files
+	return PK_CAPS_MULTIPLE|		// Archive can contain multiple files
+	       PK_CAPS_DELETE;			// Can delete files
 }

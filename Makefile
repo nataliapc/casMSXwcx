@@ -20,7 +20,7 @@ ODIR32 = $(ODIR)/w32
 ODIR64 = $(ODIR)/w64
 DIR_GUARD = @mkdir -p $(@D)
 
-#DEBUG = -DDEBUG
+DEBUG = -DDEBUG
 WINFLAGS = -s -DWINDOWS
 CFLAGS = -shared -I./includes -I$(IDIR) -Wall -O3 $(WINFLAGS) $(DEBUG)
 CFLAGS32 = $(CFLAGS) -m32 -Wl,--out-implib="$(ODIR32)/libcasMSX.wcx"

@@ -133,7 +133,7 @@ WCX_API int	STDCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 WCX_API int	STDCALL DeleteFilesW(WCHAR *PackedFile, WCHAR *DeleteList)
 {
-	DebugString( "delete files" );
+	DebugString( "delete filesW" );
 	return CAS_DeleteFiles(PackedFile, DeleteList);
 }
 
