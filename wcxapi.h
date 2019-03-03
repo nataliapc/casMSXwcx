@@ -49,8 +49,7 @@ WCX_API int		STDCALL DeleteFiles (char *PackedFile, char *DeleteList);
 WCX_API int		STDCALL DeleteFilesW (WCHAR *PackedFile, WCHAR *DeleteList);
 WCX_API BOOL	STDCALL CanYouHandleThisFile (char* szFileName);
 //WCX_API BOOL	STDCALL CanYouHandleThisFileW (WCHAR* szFileName);
-//WCX_API int		STDCALL GetPackerCaps (void);
-int __stdcall GetPackerCaps (void);
+WCX_API int		STDCALL GetPackerCaps (void);
 
 #ifdef __cplusplus
 }

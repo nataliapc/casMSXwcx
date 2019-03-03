@@ -451,7 +451,7 @@ int CAS_PackFiles (WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, WCHAR *Add
 =====================================================================
 	Function name	: DeleteFiles
 	Description	    : Delete file(s) from CAS file
-	Return type		: STDCALL
+	Return type		: int (error code or 0)
 	Argument        : WCHAR *PackedFile
 	Argument        : WCHAR *DeleteList
 */
@@ -513,6 +513,12 @@ int CAS_DeleteFiles (WCHAR *PackedFile, WCHAR *DeleteList)
 	return rc;
 }
 
+/*
+=====================================================================
+	Function name	: GetPackerCaps
+	Description	    : Tells Totalcmd what features packer plugin supports.
+	Return type		: int
+*/
 int CAS_GetPackerCaps(void)
 {
 	// Return capabilities

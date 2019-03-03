@@ -47,7 +47,7 @@
 #define PK_CAPS_MEMPACK    32    /* Supports packing in memory           */
 #define PK_CAPS_BY_CONTENT 64    /* Detect archive type by content       */
 #define PK_CAPS_SEARCHTEXT 128   /* Allow searching for text in archives */
-                                 /* created with this plugin}            */
+                                 /* created with this plugin             */
 #define PK_CAPS_HIDE       256   /* Show as normal files (hide packer    */
                                  /* icon), open with Ctrl+PgDn, not Enter*/
 #define PK_CAPS_ENCRYPT    512   /* Plugin supports PK_PACK_ENCRYPT option*/

@@ -140,8 +140,7 @@ WCX_API int	STDCALL DeleteFilesW(WCHAR *PackedFile, WCHAR *DeleteList)
 /*
 	GetPackerCaps tells Totalcmd what features your packer plugin supports.
 */
-//WCX_API int STDCALL GetPackerCaps(void)
-int __stdcall GetPackerCaps(void)
+WCX_API int STDCALL GetPackerCaps(void)
 {
 	DebugString( "get packer caps." );
 	return CAS_GetPackerCaps();
