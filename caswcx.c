@@ -90,7 +90,7 @@ typedef struct CAShandle_s {
 char	szCfgFile[MAX_PATH];	//Path to .INI config file
 char	mInvalidReplacer;		//Char replacement if invalid one in "Found:" name
 BOOL	mbEnableWarnings;		//Enable warnings
-
+BOOL	mTrimBinaryData;		//Remove final zeros from DATA end.
 
 /*===========================================================
 	Internal functions
@@ -165,7 +165,7 @@ static int MakeCASlist(CAShandle_t *lpH)
 {
 	FILE *pFile;
 	int rc = 0, idx = 1;
-	long pos = 0, pos2;
+	long pos = 0, pos2, pos3;
 	byte foundName[7];
 	FileList_t *fl;
 	char *pName, *pCmt;
@@ -199,8 +199,13 @@ static int MakeCASlist(CAShandle_t *lpH)
 			while (pos2 < lpH->lSize && memcmp(CAS_HEADER, &lpH->cRawCAS[pos2], CAS_HDR_LEN)) {
 				pos2++;
 			}
+			// Trim last zeros
+			pos3 = pos2;
+			if (mTrimBinaryData) {
+				while (pos3 > pos && lpH->cRawCAS[pos3-1]=='\0') pos3--;
+			}
 			// Found & Fill struct
-			fl->dwSize = pos2-pos;
+			fl->dwSize = pos3-pos;
 			fl->cData = lpH->cRawCAS + pos;
 			fl->crc32 = crc32b(fl->cData, fl->dwSize);
 			pName = pCmt = NULL;
@@ -266,6 +271,8 @@ HANDLE CAS_OpenArchive(tOpenArchiveDataW *ArchiveData)
 	mbEnableWarnings = atoi(szBuf);
 	GetPrivateProfileString(szCfgKey, "InvalidCharReplacer", "_", szBuf, sizeof(szBuf), szCfgFile);
 	mInvalidReplacer = szBuf[0];
+	GetPrivateProfileString(szCfgKey, "TrimBinaryData", "0", szBuf, sizeof(szBuf), szCfgFile);
+	mTrimBinaryData = atoi(szBuf);
 #else
 	mbEnableWarnings = 1;
 	mInvalidReplacer = '_';
